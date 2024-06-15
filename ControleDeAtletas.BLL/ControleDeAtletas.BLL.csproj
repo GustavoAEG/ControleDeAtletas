@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>net47</TargetFramework>
+	 
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ControleDeAtletas.DAL\ControleDeAtletas.DAL.csproj" />
+    <ProjectReference Include="..\ControleDeAtletas.DTO\ControleDeAtletas.DTO.csproj" />
+  </ItemGroup>
+
+</Project>
