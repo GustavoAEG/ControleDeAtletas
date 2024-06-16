@@ -18,8 +18,8 @@ namespace ControleDeAtletas.DAL
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                string query = "INSERT INTO Atletas (NumeroCamisa, NomeCompleto, Apelido, Posicao, Idade, Altura, Peso, IMC, ClassificacaoIMC) " +
-                               "VALUES (@NumeroCamisa, @NomeCompleto, @Apelido, @Posicao, @Idade, @Altura, @Peso, @IMC, @ClassificacaoIMC)";
+                string query = "INSERT INTO Atletas (NumeroCamisa, NomeCompleto, Apelido, Posicao, Idade, Altura, Peso, IMC, ClassificacaoIMC, DataNascimento) " +
+                               "VALUES (@NumeroCamisa, @NomeCompleto, @Apelido, @Posicao, @Idade, @Altura, @Peso, @IMC, @ClassificacaoIMC,@DataNascimento)";
 
                 SqlCommand command = new SqlCommand(query, connection);
                 command.Parameters.AddWithValue("@NumeroCamisa", atletaDTO.NumeroCamisa);
@@ -31,6 +31,7 @@ namespace ControleDeAtletas.DAL
                 command.Parameters.AddWithValue("@Peso", atletaDTO.Peso);
                 command.Parameters.AddWithValue("@IMC", atletaDTO.IMC);
                 command.Parameters.AddWithValue("@ClassificacaoIMC", atletaDTO.ClassificacaoIMC);
+                command.Parameters.AddWithValue("@DataNascimento", atletaDTO.DataNascimento);
 
                 connection.Open();
                 command.ExecuteNonQuery();

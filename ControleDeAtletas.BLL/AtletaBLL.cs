@@ -121,9 +121,13 @@ namespace ControleDeAtletas.BLL
             {
                 List<AtletaDTO> todosAtletas = atletaDAL.GetAtletas();
 
+                string filtro = classificacaoIMC.ToLower();
+
                 foreach (var atleta in todosAtletas)
                 {
-                    if (atleta.ClassificacaoIMC.Equals(classificacaoIMC, StringComparison.OrdinalIgnoreCase))
+                    string classificacaoAtleta = atleta.ClassificacaoIMC.ToLower();
+
+                    if (classificacaoAtleta.Contains(filtro))
                     {
                         atletasFiltrados.Add(atleta);
                     }
@@ -136,6 +140,7 @@ namespace ControleDeAtletas.BLL
 
             return atletasFiltrados;
         }
+
 
         public static double CalcularIMC(double altura, double peso)
         {
