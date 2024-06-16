@@ -11,8 +11,12 @@ namespace ControleDeAtletas.WebUI
 {
     public partial class ListarAtletas : System.Web.UI.Page
     {
+        protected Literal LiteralErrorMessage; 
+
         protected void Page_Load(object sender, EventArgs e)
         {
+            LiteralErrorMessage = (Literal)FindControl("LiteralErrorMessage");
+
             if (!IsPostBack)
             {
                 foreach (ListItem item in RadioButtonListFiltro.Items)
@@ -40,7 +44,6 @@ namespace ControleDeAtletas.WebUI
             AtletaBLL atletaBLL = new AtletaBLL();
             return atletaBLL.GetAtletas();
         }
-
         private void FiltrarAtletas(int numeroCamisa)
         {
             try
@@ -56,7 +59,6 @@ namespace ControleDeAtletas.WebUI
                 throw new Exception("Erro ao filtrar atletas por número da camisa", ex);
             }
         }
-
         private void FiltrarAtletasPorClassificacaoIMC(string classificacaoIMC)
         {
             try
@@ -96,6 +98,13 @@ namespace ControleDeAtletas.WebUI
 
         protected void ButtonFiltrar_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
+            {
+                TextBoxFiltro.Text = "";
+                BindGridView();
+                return;
+            }
+
             if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa")
             {
                 if (!int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
@@ -109,7 +118,7 @@ namespace ControleDeAtletas.WebUI
             else if (RadioButtonListFiltro.SelectedValue == "ClassificacaoIMC")
             {
                 string filtro = TextBoxFiltro.Text.Trim();
-                
+
                 if (!filtro.All(char.IsLetter))
                 {
                     ScriptManager.RegisterStartupScript(this, GetType(), "ErroClassificacaoIMC", "alert('A classificação IMC deve conter apenas letras.');", true);
@@ -130,15 +139,17 @@ namespace ControleDeAtletas.WebUI
 
                 FiltrarAtletasPorApelido(filtro);
             }
-            else
-            {
-                TextBoxFiltro.Text = "";
-                BindGridView();
-            }
         }
 
         protected void TextBoxFiltro_TextChanged(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
+            {
+                TextBoxFiltro.Text = "";
+                BindGridView();
+                return;
+            }
+
             if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa" && int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
             {
                 FiltrarAtletas(numeroCamisa);
@@ -150,11 +161,6 @@ namespace ControleDeAtletas.WebUI
             else if (RadioButtonListFiltro.SelectedValue == "Apelido")
             {
                 FiltrarAtletasPorApelido(TextBoxFiltro.Text.Trim());
-            }
-            else
-            {
-                TextBoxFiltro.Text = "";
-                BindGridView();
             }
         }
 
@@ -196,31 +202,57 @@ namespace ControleDeAtletas.WebUI
                 GridViewRow row = GridViewAtletas.Rows[e.RowIndex];
                 int id = Convert.ToInt32(GridViewAtletas.DataKeys[e.RowIndex].Value);
 
-                AtletaDTO atletaDTO = new AtletaDTO
+                TextBox textBoxNomeCompleto = row.FindControl("TextBoxNomeCompleto") as TextBox;
+                if (textBoxNomeCompleto != null)
                 {
-                    Id = id,
-                    NomeCompleto = (row.FindControl("TextBoxNomeCompleto") as TextBox)?.Text,
-                    NumeroCamisa = Convert.ToInt32((row.FindControl("TextBoxNumeroCamisa") as TextBox)?.Text),
-                    Apelido = (row.FindControl("TextBoxApelido") as TextBox)?.Text,
-                    Posicao = (row.FindControl("TextBoxPosicao") as TextBox)?.Text,
-                    Idade = Convert.ToInt32((row.FindControl("TextBoxIdade") as TextBox)?.Text),
-                    Altura = Convert.ToDouble((row.FindControl("TextBoxAltura") as TextBox)?.Text),
-                    Peso = Convert.ToDouble((row.FindControl("TextBoxPeso") as TextBox)?.Text),
-                    IMC = Convert.ToDouble((row.FindControl("TextBoxIMC") as TextBox)?.Text),
-                    ClassificacaoIMC = (row.FindControl("TextBoxClassificacaoIMC") as TextBox)?.Text
-                };
+                    string nomeCompleto = textBoxNomeCompleto.Text.Trim();
 
-                AtletaBLL atletaBLL = new AtletaBLL();
-                atletaBLL.AtualizarAtleta(atletaDTO);
+                    if (string.IsNullOrWhiteSpace(nomeCompleto))
+                    {
 
-                GridViewAtletas.EditIndex = -1;
-                BindGridView();
+                        LiteralErrorMessage.Text = "<p class='error-message'>Nome completo não pode estar vazio.</p>";
+                        return; 
+                    }
+
+                    if (nomeCompleto.Any(char.IsDigit))
+                    {
+                        string script = "alert('Nome inválido (não deve conter números).');";
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroNomeCompletoNumeros", script, true);              
+                    }
+
+                    AtletaDTO atletaDTO = new AtletaDTO
+                    {
+                        Id = id,
+                        NomeCompleto = nomeCompleto,
+                        NumeroCamisa = Convert.ToInt32((row.FindControl("TextBoxNumeroCamisa") as TextBox)?.Text),
+                        Apelido = (row.FindControl("TextBoxApelido") as TextBox)?.Text,
+                        Posicao = (row.FindControl("TextBoxPosicao") as TextBox)?.Text,
+                        Idade = Convert.ToInt32((row.FindControl("TextBoxIdade") as TextBox)?.Text),
+                        Altura = Convert.ToDouble((row.FindControl("TextBoxAltura") as TextBox)?.Text),
+                        Peso = Convert.ToDouble((row.FindControl("TextBoxPeso") as TextBox)?.Text),
+                        IMC = Convert.ToDouble((row.FindControl("TextBoxIMC") as TextBox)?.Text),
+                        ClassificacaoIMC = (row.FindControl("TextBoxClassificacaoIMC") as TextBox)?.Text
+                    };
+
+                    AtletaBLL atletaBLL = new AtletaBLL();
+                    atletaBLL.AtualizarAtleta(atletaDTO);
+
+                    GridViewAtletas.EditIndex = -1;
+                    BindGridView();
+                }
+                else
+                {
+
+                    LiteralErrorMessage.Text = "<p class='error-message'>Erro: Nome completo não encontrado.</p>";
+                }
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao atualizar atleta", ex);
+
+                LiteralErrorMessage.Text = $"<p class='error-message'>Erro ao atualizar atleta: {ex.Message}</p>";
             }
         }
+
         protected void GridViewAtletas_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             try

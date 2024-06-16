@@ -1,4 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CreateAtleta.aspx.cs" Inherits="ControleDeAtletas.CreateAtleta" %>
+
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="ajaxToolkit" %>
 
 <!DOCTYPE html>
@@ -6,6 +7,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title>Cadastrar Novo Atleta</title>
+    <style>
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
@@ -44,6 +51,9 @@
             <div>
                 <asp:Button ID="ButtonSalvar" runat="server" Text="Salvar" OnClick="ButtonSalvar_Click" />
                 <asp:Button ID="ButtonCancelar" runat="server" Text="Cancelar" OnClick="ButtonCancelar_Click" />
+            </div>
+            <div>
+                <asp:Literal ID="LiteralErrorMessage" runat="server"></asp:Literal>
             </div>
         </div>
     </form>

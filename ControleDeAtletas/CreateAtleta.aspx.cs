@@ -1,71 +1,104 @@
 ﻿using ControleDeAtletas.BLL;
 using ControleDeAtletas.DTO.ControleDeAtletas.DTO;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Web;
+using System.Text.RegularExpressions;
 using System.Web.UI;
-using System.Web.UI.WebControls;
 
 namespace ControleDeAtletas
 {
-    public partial class CreateAtleta : System.Web.UI.Page
+    public partial class CreateAtleta : Page
     {
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-
+    
             }
         }
 
         protected void ButtonSalvar_Click(object sender, EventArgs e)
         {
-            int numeroCamisa;
-            if (!int.TryParse(TextBoxNumeroCamisa.Text, out numeroCamisa))
+            try
             {
-                Response.Write("Número da camisa inválido");
-                return;
+                int numeroCamisa;
+                if (!int.TryParse(TextBoxNumeroCamisa.Text, out numeroCamisa))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Número da camisa inválido</p>";
+                    return;
+                }
+
+                if (!ValidarCampoSemNumeros(TextBoxNomeCompleto.Text))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Nome inválido (não deve conter números)</p>";
+                    return;
+                }
+
+                if (!ValidarCampoSemNumeros(TextBoxApelido.Text))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Apelido inválido (não deve conter números)</p>";
+                    return;
+                }
+
+                if (!ValidarCampoSemNumeros(TextBoxPosicao.Text))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Posição inválida (não deve conter números)</p>";
+                    return;
+                }
+
+                double altura;
+                if (!double.TryParse(TextBoxAltura.Text.Replace(",", "."), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out altura))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Altura inválida</p>";
+                    return;
+                }
+
+                double peso;
+                if (!double.TryParse(TextBoxPeso.Text.Replace(",", "."), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out peso))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Peso inválido</p>";
+                    return;
+                }
+
+                DateTime dataNascimento;
+                if (!DateTime.TryParseExact(TextBoxDataNascimento.Text, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dataNascimento))
+                {
+                    LiteralErrorMessage.Text = "<p class='error-message'>Data de nascimento inválida</p>";
+                    return;
+                }
+
+                AtletaDTO novoAtletaDTO = new AtletaDTO
+                {
+                    NumeroCamisa = numeroCamisa,
+                    Apelido = TextBoxApelido.Text,
+                    Posicao = TextBoxPosicao.Text,
+                    NomeCompleto = TextBoxNomeCompleto.Text,
+                    Altura = altura,
+                    Peso = peso,
+                    DataNascimento = dataNascimento
+                };
+
+                AtletaBLL atletaBLL = new AtletaBLL();
+                atletaBLL.InserirAtleta(novoAtletaDTO);
+
+                Response.Redirect("ListarAtletas.aspx");
             }
-            double altura;
-            if (!double.TryParse(TextBoxAltura.Text.Replace(",", "."), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out altura))
+            catch (Exception ex)
             {
-
-                Response.Write("Altura inválida");
-                return;
+                LiteralErrorMessage.Text = $"<p class='error-message'>Erro ao salvar o atleta: {ex.Message}</p>";
             }
-
-            double peso;
-            if (!double.TryParse(TextBoxPeso.Text.Replace(",", "."), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out peso))
-            {
-                Response.Write("Peso inválido");
-                return;
-            }
-
-            AtletaDTO novoAtletaDTO = new AtletaDTO
-            {
-                NumeroCamisa = numeroCamisa,
-                Apelido = TextBoxApelido.Text,
-                Posicao = TextBoxPosicao.Text,
-                NomeCompleto = TextBoxNomeCompleto.Text,    
-                Altura = altura,
-                Peso = peso,
-                DataNascimento = DateTime.ParseExact(TextBoxDataNascimento.Text, "dd/MM/yyyy", null),
-    
-            };
-
-            AtletaBLL atletaBLL = new AtletaBLL();
-            atletaBLL.InserirAtleta(novoAtletaDTO);
-
-            Response.Redirect("ListarAtletas.aspx");
         }
-
 
         protected void ButtonCancelar_Click(object sender, EventArgs e)
         {
             Response.Redirect("ListarAtletas.aspx");
         }
 
+        private bool ValidarCampoSemNumeros(string texto)
+        {
+            Regex regex = new Regex(@"^[^\d]+$");
+
+            return regex.IsMatch(texto);
+        }
     }
 }
