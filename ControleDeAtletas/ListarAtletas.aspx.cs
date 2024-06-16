@@ -11,7 +11,7 @@ namespace ControleDeAtletas.WebUI
 {
     public partial class ListarAtletas : System.Web.UI.Page
     {
-        protected Literal LiteralErrorMessage; 
+        protected Literal LiteralErrorMessage;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -19,24 +19,37 @@ namespace ControleDeAtletas.WebUI
 
             if (!IsPostBack)
             {
-                foreach (ListItem item in RadioButtonListFiltro.Items)
-                {
-                    if (item.Value == "NumeroCamisa")
-                    {
-                        item.Selected = true;
-                        break;
-                    }
-                }
+
+                SetDefaultRadioButtonSelection("NumeroCamisa");
 
                 BindGridView();
             }
         }
 
+        private void SetDefaultRadioButtonSelection(string value)
+        {
+            foreach (ListItem item in RadioButtonListFiltro.Items)
+            {
+                if (item.Value == value)
+                {
+                    item.Selected = true;
+                    break;
+                }
+            }
+        }
+
         private void BindGridView()
         {
-            List<AtletaDTO> atletas = GetAtletas();
-            GridViewAtletas.DataSource = atletas;
-            GridViewAtletas.DataBind();
+            try
+            {
+                List<AtletaDTO> atletas = GetAtletas();
+                GridViewAtletas.DataSource = atletas;
+                GridViewAtletas.DataBind();
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Erro ao carregar atletas: " + ex.Message);
+            }
         }
 
         private List<AtletaDTO> GetAtletas()
@@ -44,6 +57,7 @@ namespace ControleDeAtletas.WebUI
             AtletaBLL atletaBLL = new AtletaBLL();
             return atletaBLL.GetAtletas();
         }
+
         private void FiltrarAtletas(int numeroCamisa)
         {
             try
@@ -56,9 +70,10 @@ namespace ControleDeAtletas.WebUI
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao filtrar atletas por número da camisa", ex);
+                ShowErrorMessage("Erro ao filtrar atletas por número da camisa: " + ex.Message);
             }
         }
+
         private void FiltrarAtletasPorClassificacaoIMC(string classificacaoIMC)
         {
             try
@@ -71,7 +86,7 @@ namespace ControleDeAtletas.WebUI
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao filtrar atletas por classificação de IMC", ex);
+                ShowErrorMessage("Erro ao filtrar atletas por classificação de IMC: " + ex.Message);
             }
         }
 
@@ -90,77 +105,93 @@ namespace ControleDeAtletas.WebUI
                 GridViewAtletas.DataSource = atletasFiltrados;
                 GridViewAtletas.DataBind();
             }
+            catch (ArgumentException ex)
+            {
+                ShowErrorMessage(ex.Message);
+            }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao filtrar atletas por apelido", ex);
+                ShowErrorMessage("Erro ao filtrar atletas por apelido: " + ex.Message);
             }
         }
 
         protected void ButtonFiltrar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
+            try
             {
-                TextBoxFiltro.Text = "";
-                BindGridView();
-                return;
-            }
-
-            if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa")
-            {
-                if (!int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
+                if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "ErroNumeroCamisa", "alert('O número da camisa deve conter apenas números.');", true);
+                    BindGridView();
                     return;
                 }
 
-                FiltrarAtletas(numeroCamisa);
-            }
-            else if (RadioButtonListFiltro.SelectedValue == "ClassificacaoIMC")
-            {
-                string filtro = TextBoxFiltro.Text.Trim();
-
-                if (!filtro.All(char.IsLetter))
+                if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa")
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "ErroClassificacaoIMC", "alert('A classificação IMC deve conter apenas letras.');", true);
-                    return;
+                    if (!int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroNumeroCamisa", "alert('O número da camisa deve conter apenas números.');", true);
+                        return;
+                    }
+
+                    FiltrarAtletas(numeroCamisa);
                 }
-
-                FiltrarAtletasPorClassificacaoIMC(filtro);
-            }
-            else if (RadioButtonListFiltro.SelectedValue == "Apelido")
-            {
-                string filtro = TextBoxFiltro.Text.Trim();
-
-                if (!filtro.All(char.IsLetter))
+                else if (RadioButtonListFiltro.SelectedValue == "ClassificacaoIMC")
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "ErroApelido", "alert('O apelido deve conter apenas letras.');", true);
-                    return;
-                }
+                    string filtro = TextBoxFiltro.Text.Trim();
 
-                FiltrarAtletasPorApelido(filtro);
+                    if (!filtro.All(char.IsLetter))
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroClassificacaoIMC", "alert('A classificação IMC deve conter apenas letras.');", true);
+                        return;
+                    }
+
+                    FiltrarAtletasPorClassificacaoIMC(filtro);
+                }
+                else if (RadioButtonListFiltro.SelectedValue == "Apelido")
+                {
+                    string filtro = TextBoxFiltro.Text.Trim();
+
+                    if (!filtro.All(char.IsLetter))
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroApelido", "alert('O apelido deve conter apenas letras.');", true);
+                        return;
+                    }
+
+                    FiltrarAtletasPorApelido(filtro);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Erro ao filtrar atletas: " + ex.Message);
             }
         }
 
         protected void TextBoxFiltro_TextChanged(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
+            try
             {
-                TextBoxFiltro.Text = "";
-                BindGridView();
-                return;
-            }
+                if (string.IsNullOrWhiteSpace(TextBoxFiltro.Text))
+                {
+                    BindGridView();
+                    return;
+                }
 
-            if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa" && int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
-            {
-                FiltrarAtletas(numeroCamisa);
+                if (RadioButtonListFiltro.SelectedValue == "NumeroCamisa" && int.TryParse(TextBoxFiltro.Text, out int numeroCamisa))
+                {
+                    FiltrarAtletas(numeroCamisa);
+                }
+                else if (RadioButtonListFiltro.SelectedValue == "ClassificacaoIMC")
+                {
+                    FiltrarAtletasPorClassificacaoIMC(TextBoxFiltro.Text.Trim());
+                }
+                else if (RadioButtonListFiltro.SelectedValue == "Apelido")
+                {
+                    FiltrarAtletasPorApelido(TextBoxFiltro.Text.Trim());
+                }
             }
-            else if (RadioButtonListFiltro.SelectedValue == "ClassificacaoIMC")
+            catch (Exception ex)
             {
-                FiltrarAtletasPorClassificacaoIMC(TextBoxFiltro.Text.Trim());
-            }
-            else if (RadioButtonListFiltro.SelectedValue == "Apelido")
-            {
-                FiltrarAtletasPorApelido(TextBoxFiltro.Text.Trim());
+                ShowErrorMessage("Erro ao filtrar atletas: " + ex.Message);
             }
         }
 
@@ -180,6 +211,8 @@ namespace ControleDeAtletas.WebUI
             {
                 TextBoxFiltro.Attributes["placeholder"] = "Digite a classificação do IMC...";
             }
+
+            BindGridView();
         }
 
         protected void GridViewAtletas_RowEditing(object sender, GridViewEditEventArgs e)
@@ -191,7 +224,7 @@ namespace ControleDeAtletas.WebUI
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao editar atleta", ex);
+                ShowErrorMessage("Erro ao editar atleta: " + ex.Message);
             }
         }
 
@@ -207,24 +240,115 @@ namespace ControleDeAtletas.WebUI
                 {
                     string nomeCompleto = textBoxNomeCompleto.Text.Trim();
 
-                    if (string.IsNullOrWhiteSpace(nomeCompleto))
-                    {
-
-                        LiteralErrorMessage.Text = "<p class='error-message'>Nome completo não pode estar vazio.</p>";
-                        return; 
-                    }
-
                     if (nomeCompleto.Any(char.IsDigit))
                     {
-                        string script = "alert('Nome inválido (não deve conter números).');";
-                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroNomeCompletoNumeros", script, true);              
+                        textBoxNomeCompleto.Text = ""; 
+
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ErroNomeCompletoNumeros", "alert('Nome inválido (não deve conter números).');", true);
+                        GridViewAtletas.EditIndex = e.RowIndex; 
+                        BindGridView();
+                        return;
+                    }
+
+                    TextBox textBoxNumeroCamisa = row.FindControl("TextBoxNumeroCamisa") as TextBox;
+                    if (textBoxNumeroCamisa != null)
+                    {
+                        string numeroCamisaText = textBoxNumeroCamisa.Text.Trim();
+                        int numeroCamisa;
+                        if (!int.TryParse(numeroCamisaText, out numeroCamisa))
+                        {
+                            textBoxNumeroCamisa.Text = "";
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroNumeroCamisa", "alert('O número da camisa deve conter apenas números.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex;
+                            BindGridView();
+                            return;
+                        }
+                    }
+
+                    TextBox textBoxApelido = row.FindControl("TextBoxApelido") as TextBox;
+                    if (textBoxApelido != null)
+                    {
+                        string apelido = textBoxApelido.Text.Trim();
+                        if (!apelido.All(char.IsLetter))
+                        {
+                            textBoxApelido.Text = "";
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroApelido", "alert('O apelido deve conter apenas letras.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex;
+                            BindGridView();
+                            return;
+                        }
+                    }
+
+                    TextBox textBoxPosicao = row.FindControl("TextBoxPosicao") as TextBox;
+                    if (textBoxPosicao != null)
+                    {
+                        string posicao = textBoxPosicao.Text.Trim();
+                        if (!string.IsNullOrWhiteSpace(posicao) && !posicao.All(char.IsLetter))
+                        {
+                            textBoxPosicao.Text = "";
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroPosicao", "alert('A posição deve conter apenas letras.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex; 
+                            BindGridView();
+                            return;
+                        }
+                    }
+
+                    TextBox textBoxIdade = row.FindControl("TextBoxIdade") as TextBox;
+                    if (textBoxIdade != null)
+                    {
+                        string idadeText = textBoxIdade.Text.Trim();
+                        int idade;
+                        if (!int.TryParse(idadeText, out idade) || idade < 0)
+                        {
+                            textBoxIdade.Text = ""; 
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroIdade", "alert('A idade deve ser um número inteiro positivo.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex; 
+                            BindGridView();
+                            return;
+                        }
+                    }
+
+                    TextBox textBoxAltura = row.FindControl("TextBoxAltura") as TextBox;
+                    if (textBoxAltura != null)
+                    {
+                        string alturaText = textBoxAltura.Text.Trim();
+                        double altura;
+                        if (!double.TryParse(alturaText, out altura) || altura <= 0)
+                        {
+                            textBoxAltura.Text = "";
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroAltura", "alert('A altura deve ser um número decimal.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex;
+                            BindGridView();
+                            return;
+                        }
+                    }
+
+                    TextBox textBoxPeso = row.FindControl("TextBoxPeso") as TextBox;
+                    if (textBoxPeso != null)
+                    {
+                        string pesoText = textBoxPeso.Text.Trim();
+                        double peso;
+                        if (!double.TryParse(pesoText, out peso) || peso <= 0)
+                        {
+                            textBoxPeso.Text = "";
+
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ErroPeso", "alert('O peso deve ser um número decimal positivo.');", true);
+                            GridViewAtletas.EditIndex = e.RowIndex; 
+                            BindGridView();
+                            return;
+                        }
                     }
 
                     AtletaDTO atletaDTO = new AtletaDTO
                     {
                         Id = id,
                         NomeCompleto = nomeCompleto,
-                        NumeroCamisa = Convert.ToInt32((row.FindControl("TextBoxNumeroCamisa") as TextBox)?.Text),
+                        NumeroCamisa = Convert.ToInt32(textBoxNumeroCamisa.Text),
                         Apelido = (row.FindControl("TextBoxApelido") as TextBox)?.Text,
                         Posicao = (row.FindControl("TextBoxPosicao") as TextBox)?.Text,
                         Idade = Convert.ToInt32((row.FindControl("TextBoxIdade") as TextBox)?.Text),
@@ -236,20 +360,17 @@ namespace ControleDeAtletas.WebUI
 
                     AtletaBLL atletaBLL = new AtletaBLL();
                     atletaBLL.AtualizarAtleta(atletaDTO);
-
                     GridViewAtletas.EditIndex = -1;
                     BindGridView();
                 }
                 else
                 {
-
-                    LiteralErrorMessage.Text = "<p class='error-message'>Erro: Nome completo não encontrado.</p>";
+                    ShowErrorMessage("Erro: Nome completo não encontrado.");
                 }
             }
             catch (Exception ex)
             {
-
-                LiteralErrorMessage.Text = $"<p class='error-message'>Erro ao atualizar atleta: {ex.Message}</p>";
+                ShowErrorMessage("Erro ao atualizar atleta: " + ex.Message);
             }
         }
 
@@ -263,9 +384,10 @@ namespace ControleDeAtletas.WebUI
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao excluir atleta", ex);
+                ShowErrorMessage("Erro ao excluir atleta: " + ex.Message);
             }
         }
+
         protected void ExcluirAtleta(int id)
         {
             try
@@ -275,9 +397,10 @@ namespace ControleDeAtletas.WebUI
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao excluir atleta", ex);
+                ShowErrorMessage("Erro ao excluir atleta: " + ex.Message);
             }
         }
+
         protected void GridViewAtletas_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
         {
             GridViewAtletas.EditIndex = -1;
@@ -288,22 +411,19 @@ namespace ControleDeAtletas.WebUI
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                if ((e.Row.RowState & DataControlRowState.Edit) == 0)
+                Label lblIMC = (Label)e.Row.FindControl("LabelIMC");
+                Label lblClassificacaoIMC = (Label)e.Row.FindControl("LabelClassificacaoIMC");
+                if (lblIMC != null && lblClassificacaoIMC != null)
                 {
-                    Label lblIMC = (Label)e.Row.FindControl("LabelIMC");
-                    Label lblClassificacaoIMC = (Label)e.Row.FindControl("LabelClassificacaoIMC");
-                    if (lblIMC != null)
+                    double imcValue;
+                    if (double.TryParse(lblIMC.Text, out imcValue))
                     {
-                        double imcValue;
-                        if (double.TryParse(lblIMC.Text, out imcValue))
-                        {
-                            double imcLimite = 25;
+                        double imcLimite = 25;
 
-                            if (imcValue > imcLimite)
-                            {
-                                lblIMC.CssClass = "imc-alto";
-                                lblClassificacaoIMC.CssClass = "imc-alto";
-                            }
+                        if (imcValue > imcLimite)
+                        {
+                            lblIMC.CssClass = "imc-alto";
+                            lblClassificacaoIMC.CssClass = "imc-alto";
                         }
                     }
                 }
@@ -313,6 +433,11 @@ namespace ControleDeAtletas.WebUI
         protected void ButtonCriarNovo_Click(object sender, EventArgs e)
         {
             Response.Redirect("~/CreateAtleta.aspx");
+        }
+
+        private void ShowErrorMessage(string message)
+        {
+            LiteralErrorMessage.Text = $"<p class='error-message'>{message}</p>";
         }
     }
 }

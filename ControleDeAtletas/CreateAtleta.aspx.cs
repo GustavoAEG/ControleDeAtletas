@@ -16,7 +16,6 @@ namespace ControleDeAtletas
     
             }
         }
-
         protected void ButtonSalvar_Click(object sender, EventArgs e)
         {
             try
